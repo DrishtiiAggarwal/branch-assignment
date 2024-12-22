@@ -37,9 +37,15 @@ USER_LOAN_RANK_analysis.to_csv("USER_LOAN_RANK_analysis.csv", index=False)
 ## Loan Rank Distribution (Defaulters vs Non-Defaulters)
 defaulters_rank_count = defaulters['USER_LOAN_RANK'].value_counts().sort_index()
 non_defaulters_rank_count = non_defaulters['USER_LOAN_RANK'].value_counts().sort_index()
+# Define contrasting colors
+defaulters_color = "red"
+non_defaulters_color = "blue"
+
+# Generate bar chart
 plt.figure(figsize=(12, 6))
-plt.bar(defaulters_rank_count.index, defaulters_rank_count.values, alpha=0.7, label="Defaulters")
-plt.bar(non_defaulters_rank_count.index, non_defaulters_rank_count.values, alpha=0.7, label="Non-Defaulters")
+plt.xlim([0, 30])
+plt.bar(defaulters_rank_count.index, defaulters_rank_count.values, alpha=0.7, color=defaulters_color, label="Defaulters")
+plt.bar(non_defaulters_rank_count.index, non_defaulters_rank_count.values, alpha=0.7, color=non_defaulters_color, label="Non-Defaulters")
 plt.xlabel("Loan Rank")
 plt.ylabel("Count of Users")
 plt.title("Number of Loans by Loan Rank (Defaulters vs Non-Defaulters)")
@@ -87,7 +93,7 @@ plt.savefig("avg_loan_amount_by_rank.png")
 plt.show()
 
 ## Credit Score Range and Default Rates
-defaulters['CREDIT_SCORE_RANGE'] = pd.cut(defaulters['CREDIT_SCORE'], bins=[0, 300, 600, 750, 850], labels=['Very Poor', 'Poor', 'Good', 'Excellent'])
+defaulters['CREDIT_SCORE_RANGE'] = pd.cut(defaulters['CREDIT_SCORE']*100, bins=[0, 40, 60, 80,100 ], labels=['Very Poor', 'Poor', 'Good', 'Excellent'])
 defaulters_credit_range = defaulters['CREDIT_SCORE_RANGE'].value_counts().reset_index()
 defaulters_credit_range.columns = ['CREDIT_SCORE_RANGE', 'COUNT']
 plt.figure(figsize=(12, 6))
