@@ -2,10 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Step 1: Load the dataset
 df = pd.read_excel(r"C:\Users\dell\Downloads\loans.xlsx")
 
-# Step 2: Data validation and preprocessing
 required_columns = ['USER_ID', 'CREATED_AT', 'USER_LOAN_RANK', 'CREDIT_SCORE', 'AMOUNT_DISBURSED', 'LOAN_STATUS']
 for col in required_columns:
     if col not in df.columns:
@@ -16,32 +14,27 @@ if 'LOAN_TENURE' not in df.columns:
 
 df['CREATED_AT'] = pd.to_datetime(df['CREATED_AT'])
 
-# Sort and filter for the most recent loan entries
 df_sorted = df.sort_values(by=['USER_ID', 'CREATED_AT'], ascending=[True, False])
 last_loans = df_sorted.drop_duplicates(subset=['USER_ID'], keep='first')
 
-# Step 3: Identify defaulters and non-defaulters
+#Identify defaulters and non-defaulters
 defaulters = last_loans[last_loans['LOAN_STATUS'] == 'defaulted']
 non_defaulters = last_loans[last_loans['LOAN_STATUS'] != 'defaulted']
 
-# Save defaulters and non-defaulters data for further analysis
 defaulters.to_csv("defaulters_list.csv", index=False)
 non_defaulters[['USER_ID', 'USER_LOAN_RANK', 'CREDIT_SCORE']].to_csv("non_defaulters_USER_LOAN_RANK_CREDIT_SCORE.csv", index=False)
 
-# Step 4: Performance analysis
-## Insights: Credit Score and Loan Rank
+#Performance analysis
 USER_LOAN_RANK_analysis = non_defaulters.groupby('USER_LOAN_RANK')['CREDIT_SCORE'].mean().reset_index()
 USER_LOAN_RANK_analysis.to_csv("USER_LOAN_RANK_analysis.csv", index=False)
 
-# Step 5: Visualizations
+#Visualizations
 ## Loan Rank Distribution (Defaulters vs Non-Defaulters)
 defaulters_rank_count = defaulters['USER_LOAN_RANK'].value_counts().sort_index()
 non_defaulters_rank_count = non_defaulters['USER_LOAN_RANK'].value_counts().sort_index()
-# Define contrasting colors
+
 defaulters_color = "red"
 non_defaulters_color = "blue"
-
-# Generate bar chart
 plt.figure(figsize=(12, 6))
 plt.xlim([0, 30])
 plt.bar(defaulters_rank_count.index, defaulters_rank_count.values, alpha=0.7, color=defaulters_color, label="Defaulters")
@@ -81,19 +74,30 @@ plt.title("Loan Amount vs Credit Score (Defaulters)")
 plt.savefig("loan_amount_vs_credit_score_defaulters.png")
 plt.show()
 
-# Additional Analysis
-## Loan Amount by Loan Rank (Non-Defaulters)
-amount_disbursed_by_rank = non_defaulters.groupby('USER_LOAN_RANK')['AMOUNT_DISBURSED'].mean().reset_index()
+#Average Loan Amount by Loan Rank (Defaulters vs Non-Defaulters
+#for defaulters
+defaulters_avg_amount = defaulters.groupby('USER_LOAN_RANK')['AMOUNT_DISBURSED'].mean().reset_index()
+defaulters_avg_amount['CATEGORY'] = 'Defaulters'
+
+#for non-defaulters
+non_defaulters_avg_amount = non_defaulters.groupby('USER_LOAN_RANK')['AMOUNT_DISBURSED'].mean().reset_index()
+non_defaulters_avg_amount['CATEGORY'] = 'Non-Defaulters'
+
+#comparison
+combined_avg_amount = pd.concat([defaulters_avg_amount, non_defaulters_avg_amount])
+
 plt.figure(figsize=(12, 6))
-sns.barplot(x='USER_LOAN_RANK', y='AMOUNT_DISBURSED', data=amount_disbursed_by_rank, palette="Blues_d")
+sns.barplot(x='USER_LOAN_RANK', y='AMOUNT_DISBURSED', hue='CATEGORY', data=combined_avg_amount, palette={'Defaulters': '#FF6F61', 'Non-Defaulters': '#2B7A78'})
 plt.xlabel("Loan Rank")
 plt.ylabel("Average Loan Amount")
-plt.title("Average Loan Amount by Loan Rank (Non-Defaulters)")
-plt.savefig("avg_loan_amount_by_rank.png")
+plt.title("Average Loan Amount by Loan Rank (Defaulters vs Non-Defaulters)")
+plt.legend(title="Category")
+plt.savefig("avg_loan_amount_by_rank_defaulters_vs_non_defaulters.png")
 plt.show()
 
+
 ## Credit Score Range and Default Rates
-defaulters['CREDIT_SCORE_RANGE'] = pd.cut(defaulters['CREDIT_SCORE']*100, bins=[0, 40, 60, 80,100 ], labels=['Very Poor', 'Poor', 'Good', 'Excellent'])
+defaulters['CREDIT_SCORE_RANGE'] = pd.cut(defaulters['CREDIT_SCORE']*100, bins=[0, 40, 60, 80,100 ], labels=['Very Poor(0.0-0.39)', 'Poor(0.40-0.59)', 'Good(0.60-0.79)', 'Excellent(0.80-1)'])
 defaulters_credit_range = defaulters['CREDIT_SCORE_RANGE'].value_counts().reset_index()
 defaulters_credit_range.columns = ['CREDIT_SCORE_RANGE', 'COUNT']
 plt.figure(figsize=(12, 6))
@@ -104,5 +108,4 @@ plt.title("Default Counts by Credit Score Range")
 plt.savefig("default_counts_by_credit_score_range.png")
 plt.show()
 
-# Save insights and export visuals
-print("Analysis complete. Generated CSVs and visualizations saved.")
+print("Analysis complete.")
